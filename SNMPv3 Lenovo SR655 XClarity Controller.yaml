@@ -1,0 +1,369 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: e960332b3f6c46a1956486d4f3f99fce
+      name: 'Templates/Server hardware'
+  templates:
+    - uuid: 2b5a5d805d2d4720bafac480c00d9a9e
+      template: 'SNMPv3 Lenovo SR655 XClarity Controller'
+      name: 'SNMPv3 Lenovo SR655 XClarity Controller'
+      groups:
+        - name: 'Templates/Server hardware'
+      items:
+        - uuid: 87d283f5543d4965ae2167b84b8ed07e
+          name: 'System PowerOnHours'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.19046.11.3.3.6.0
+          key: systemInfo.PowerOnHours
+          delay: 5m
+          history: 90d
+          trends: '0'
+          units: h
+          description: 'System health summary severity.'
+          tags:
+            - tag: Application
+              value: Power
+            - tag: Application
+              value: 'System Health'
+        - uuid: d69e345fcd3d428cb34e41e2353b0eaf
+          name: 'System Power Status'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.19046.11.3.3.4.0
+          key: systemInfo.powerStatus
+          history: 90d
+          value_type: CHAR
+          trends: '0'
+          description: 'System health summary severity.'
+          valuemap:
+            name: powerStatus
+          tags:
+            - tag: Application
+              value: Power
+            - tag: Application
+              value: 'System Health'
+        - uuid: f03097b453c74cb5ae4c27e783334c70
+          name: 'System Restart Cause'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.19046.11.3.3.7.0
+          key: systemInfo.RestartCause
+          history: 90d
+          value_type: TEXT
+          trends: '0'
+          description: 'System health summary severity.'
+          preprocessing:
+            - type: DISCARD_UNCHANGED
+              parameters:
+                - ''
+          tags:
+            - tag: Application
+              value: 'System Health'
+      discovery_rules:
+        - uuid: 9e9d6500fc4648adba9e17825190da39
+          name: fanEntry
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.19046.11.3.1.3.1.1.1]'
+          key: fanEntry.fanIndex
+          delay: 1h
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          description: 'This column is used to identify a particular fan.'
+          item_prototypes:
+            - uuid: 8b86be684bbf492ea486b431d3edcd79
+              name: 'Fan {#SNMPINDEX} Description'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.3.1.1.2.{#SNMPINDEX}'
+              key: 'fanEntry.fanDescr.[{#SNMPINDEX}]'
+              delay: 1d
+              value_type: TEXT
+              trends: '0'
+              description: 'A description of the fan measurement channel.'
+              tags:
+                - tag: Application
+                  value: Fan
+            - uuid: 6da6d6276bef4876928e09040011a949
+              name: 'Fan {#SNMPINDEX} Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.3.1.1.10.{#SNMPINDEX}'
+              key: 'fanEntry.fanHealthStatus.[{#SNMPINDEX}]'
+              value_type: TEXT
+              trends: '0'
+              description: 'A description of the fan component status.'
+              tags:
+                - tag: Application
+                  value: Fan
+              trigger_prototypes:
+                - uuid: caee3bace5694893ba1364eb32b39fd9
+                  expression: 'last(/Template SNMPv3 Lenovo XClarity Controller/fanEntry.fanHealthStatus.[{#SNMPINDEX}])<>"Ok"'
+                  name: 'Fan status on {HOSTNAME}: abnormal'
+                  priority: WARNING
+            - uuid: 4b494c1203f34cf89a25c491c990e2e9
+              name: 'Fan {#SNMPINDEX} Speed'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.3.1.1.3.{#SNMPINDEX}'
+              key: 'fanEntry.fanSpeed.[{#SNMPINDEX}]'
+              trends: '0'
+              units: RPM
+              description: 'Fan speed expressed in percent(%) of maximum RPM. An octet string expressed as ''ddd% of maximum'' where: d is a decimal digit or blank space for a leading zero. If the fan is determined not to be running or the fan speed cannot be determined, the string will indicate ''Offline''.'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - \d+
+                    - \0
+              tags:
+                - tag: Application
+                  value: Fan
+        - uuid: 853d3f699c2641d19d3657536fa5e2f3
+          name: powerEntry
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.19046.11.3.1.4.1.1.1]'
+          key: powerEntry.powerIndex
+          delay: 1h
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          description: 'This column is used to identify a particular power module inventory channel.'
+          item_prototypes:
+            - uuid: eab66e82816e4b10ace83e20b87f7e9a
+              name: 'Power {#SNMPINDEX} Name'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.4.1.1.2.{#SNMPINDEX}'
+              key: 'powerEntry.powerFruName.[{#SNMPINDEX}]'
+              delay: 1d
+              value_type: TEXT
+              trends: '0'
+              tags:
+                - tag: Application
+                  value: Power
+            - uuid: 21fe4c78426d4b6a841caff0de896b15
+              name: 'Power {#SNMPINDEX} Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.4.1.1.3.{#SNMPINDEX}'
+              key: 'powerEntry.powerHealthStatus.[{#SNMPINDEX}]'
+              value_type: TEXT
+              trends: '0'
+              description: 'A description of the power module status.'
+              tags:
+                - tag: Application
+                  value: Power
+              trigger_prototypes:
+                - uuid: efe0e6f4077145e7993aa95a74e03022
+                  expression: 'last(/Template SNMPv3 Lenovo XClarity Controller/powerEntry.powerHealthStatus.[{#SNMPINDEX}])<>"OK"'
+                  name: 'Power status on {HOSTNAME}: abnormal'
+                  priority: WARNING
+            - uuid: 2fc88ff4bebc4e4188bb844c4d43157d
+              name: 'Power {#SNMPINDEX} Input Current'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.4.1.1.6.{#SNMPINDEX}'
+              key: 'powerEntry.psuInputCurrent.[{#SNMPINDEX}]'
+              history: 180d
+              value_type: FLOAT
+              units: A
+              description: 'A description of the power module status.'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '[0-9\.]+'
+                    - \0
+              tags:
+                - tag: Application
+                  value: Power
+            - uuid: 376120bb400b487384ef1031bc848266
+              name: 'Power {#SNMPINDEX} Input Vol'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.4.1.1.5.{#SNMPINDEX}'
+              key: 'powerEntry.psuInputVol.[{#SNMPINDEX}]'
+              history: 180d
+              value_type: FLOAT
+              units: V
+              description: 'A description of the power module status.'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '[0-9\.]+'
+                    - \0
+              tags:
+                - tag: Application
+                  value: Power
+            - uuid: d6223bdc240345118d293b8b2c734ea3
+              name: 'Power {#SNMPINDEX} Output Power'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.4.1.1.7.{#SNMPINDEX}'
+              key: 'powerEntry.psuOutputPower.[{#SNMPINDEX}]'
+              history: 180d
+              value_type: FLOAT
+              units: W
+              description: 'A description of the power module status.'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - '[0-9\.]+'
+                    - \0
+              tags:
+                - tag: Application
+                  value: Power
+        - uuid: a49c8bbaf2e9440e93c345d4e14a65e4
+          name: powerStatistics
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.19046.11.3.1.5.1.1.1]'
+          key: powerStatistics.statsIndex
+          delay: 1h
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          description: 'This column is used to identify a particular power module inventory channel.'
+          item_prototypes:
+            - uuid: 3f2aba9d05f041d48fcff97d6559886a
+              name: 'Power {#SNMPINDEX} averagePower'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.5.1.1.3.{#SNMPINDEX}'
+              key: 'powerStatistics.averagePower.[{#SNMPINDEX}]'
+              delay: 5m
+              history: 180d
+              units: W
+            - uuid: 11242665afee4c9683da36d552ed0d48
+              name: 'Power {#SNMPINDEX} pStatsDescr'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.5.1.1.2.{#SNMPINDEX}'
+              key: 'powerStatistics.pStatsDescr.[{#SNMPINDEX}]'
+              delay: 1h
+              history: 180d
+              value_type: TEXT
+              trends: '0'
+            - uuid: dc72b14ce00e408dafd3e6d341036955
+              name: 'Power {#SNMPINDEX} totalPower'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.5.1.1.4.{#SNMPINDEX}'
+              key: 'powerStatistics.totalPower.[{#SNMPINDEX}]'
+              delay: 5m
+              history: 180d
+              units: W
+        - uuid: 410b06550a314338b2d0f6deb2976191
+          name: 'Firmware Info'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.19046.11.3.4.1.1.1.1,{#DEVICENAME},.1.3.6.1.4.1.19046.11.3.4.1.1.1.2]'
+          key: systemManager.firmwareInfo
+          delay: 1h
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          description: 'This column is used to identify a particular voltage measurement channel.'
+          item_prototypes:
+            - uuid: 70d2dcbeb29c4db392a7446fb430f89e
+              name: '{#DEVICENAME} Firmware Version'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.4.1.1.1.3.{#SNMPINDEX}'
+              key: 'systemManager.firmwareInfo[{#SNMPINDEX}]'
+              delay: 30m
+              value_type: TEXT
+              trends: '0'
+              preprocessing:
+                - type: DISCARD_UNCHANGED
+                  parameters:
+                    - ''
+        - uuid: fa82fd573c994bdf90bc74a3eaef11f8
+          name: tempEntry
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.19046.11.3.1.1.1.1.1]'
+          key: tempEntry.tempIndex
+          delay: 1h
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          description: 'This column is used to identify a particular temperature measurement channel.'
+          item_prototypes:
+            - uuid: 7ec0d0aa042c45ad873aba59c43e9fd0
+              name: 'Temperature {#SNMPINDEX} Description'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.1.1.1.2.{#SNMPINDEX}'
+              key: 'tempEntry.tempDescr.[{#SNMPINDEX}]'
+              delay: 1d
+              value_type: TEXT
+              trends: '0'
+              description: 'A description of the temperature measurement channel.'
+              tags:
+                - tag: Application
+                  value: Temperature
+            - uuid: 0f428bcf783741888422178d6918dd31
+              name: 'Temperature {#SNMPINDEX} Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.1.1.1.10.{#SNMPINDEX}'
+              key: 'tempEntry.tempHealthStatus.[{#SNMPINDEX}]'
+              value_type: TEXT
+              trends: '0'
+              description: 'A description of the temperature component status.'
+              tags:
+                - tag: Application
+                  value: Temperature
+              trigger_prototypes:
+                - uuid: c6d68bb629b94bc3b979582e720590da
+                  expression: 'last(/Template SNMPv3 Lenovo XClarity Controller/tempEntry.tempHealthStatus.[{#SNMPINDEX}])<>"Ok"'
+                  name: 'Temperature status on {HOSTNAME}: abnormal'
+                  priority: WARNING
+            - uuid: fd8005a37ae94da7ad837ae2a947276c
+              name: 'Temperature {#SNMPINDEX} Reading'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.1.1.1.3.{#SNMPINDEX}'
+              key: 'tempEntry.tempReading.[{#SNMPINDEX}]'
+              units: °C
+              description: 'The measured temperature.'
+              preprocessing:
+                - type: REGEX
+                  parameters:
+                    - \d+
+                    - \0
+              tags:
+                - tag: Application
+                  value: Temperature
+        - uuid: 94478eec2a3c4350a146916634126de8
+          name: voltEntry
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.19046.11.3.1.2.1.1.1]'
+          key: voltEntry.voltIndex
+          delay: 1h
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          description: 'This column is used to identify a particular voltage measurement channel.'
+          item_prototypes:
+            - uuid: acf3eba6babf44928f0865b8056da455
+              name: 'Voltage {#SNMPINDEX} Description'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.2.1.1.2.{#SNMPINDEX}'
+              key: 'voltEntry.voltDescr.[{#SNMPINDEX}]'
+              delay: 1d
+              value_type: TEXT
+              trends: '0'
+              description: 'A description of the voltage measurement channel.'
+              tags:
+                - tag: Application
+                  value: Voltage
+            - uuid: a5a86c4743f6405592a898fcde93b962
+              name: 'Voltage {#SNMPINDEX} Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.2.1.1.10.{#SNMPINDEX}'
+              key: 'voltEntry.voltHealthStatus.[{#SNMPINDEX}]'
+              value_type: TEXT
+              trends: '0'
+              description: 'A description of the voltage component status.'
+              tags:
+                - tag: Application
+                  value: Voltage
+              trigger_prototypes:
+                - uuid: aa6650a9a7de4cd7a050cb637cd8e629
+                  expression: 'last(/Template SNMPv3 Lenovo XClarity Controller/voltEntry.voltHealthStatus.[{#SNMPINDEX}])<>"Ok"'
+                  name: 'Voltage status on {HOSTNAME}: abnormal'
+                  priority: WARNING
+            - uuid: 959f55d637ec468f9ba97f267af09019
+              name: 'Voltage {#SNMPINDEX} Reading'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.19046.11.3.1.2.1.1.3.{#SNMPINDEX}'
+              key: 'voltEntry.voltReading.[{#SNMPINDEX}]'
+              value_type: FLOAT
+              units: V
+              description: 'The measured voltage.'
+              tags:
+                - tag: Application
+                  value: Voltage
+      valuemaps:
+        - uuid: 39996d3d023f45749a56cc2b28143aba
+          name: powerStatus
+          mappings:
+            - value: '0'
+              newvalue: 'Power Off'
+            - value: '255'
+              newvalue: 'Power On'
